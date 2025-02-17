@@ -1,0 +1,76 @@
+---
+
+paperless_config:
+  usermap:
+    uid: 1000
+    gid: 1000
+  url: "https://paperless.molecule.local"
+  secret_key: 'ywFJhEdXaQK088TGqDJWTu6ivkrT'
+  time_zone: Europe/Berlin
+  ocr_languages:
+    - deu
+    - eng
+  ocr_default_language: deu
+
+paperless_compose_networks:
+  - name: paperless
+    state: present
+    enable_ipv6: false
+    ipam:
+      driver: default
+      config:
+        - subnet: "172.10.10.0/24"
+
+paperless_compose_services:
+  - name: broker
+    image: docker.io/library/redis:7
+    restart: unless-stopped
+    volumes:
+      - "{{ paperless_install_path }}/paperless-data/redis-data:/data"
+    sysctls:
+      - net.core.somaxconn=4096
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: "256M"
+        reservations:
+          cpus: '0.1'
+          memory: "128M"
+
+  - name: webserver
+    image: ghcr.io/paperless-ngx/paperless-ngx:latest
+    restart: unless-stopped
+    depends_on:
+      - broker
+      - gotenberg
+      - tika
+    ports:
+      - "8000:8000"
+    volumes:
+      - "{{ paperless_install_path }}/paperless-data/data:/usr/src/paperless/data"
+      - "{{ paperless_install_path }}/paperless-data/media:/usr/src/paperless/media"
+      - "{{ paperless_install_path }}/paperless-data/export:/usr/src/paperless/export"
+      - "{{ paperless_install_path }}/paperless-data/consume:/usr/src/paperless/consume"
+    env_file: ../docker-compose.env
+    environment:
+      PAPERLESS_REDIS: redis://broker:6379
+      PAPERLESS_TIKA_ENABLED: 1
+      PAPERLESS_TIKA_GOTENBERG_ENDPOINT: http://gotenberg:3000
+      PAPERLESS_TIKA_ENDPOINT: http://tika:9998
+
+  - name: gotenberg
+    image: docker.io/gotenberg/gotenberg:8.7
+    restart: unless-stopped
+    # The gotenberg chromium route is used to convert .eml files. We do not
+    # want to allow external content like tracking pixels or even javascript.
+    command:
+      - "gotenberg"
+      - "--chromium-disable-javascript=true"
+      - "--chromium-allow-list=file:///tmp/.*"
+
+  - name: tika
+    image: docker.io/apache/tika:latest
+    restart: unless-stopped
+
+...

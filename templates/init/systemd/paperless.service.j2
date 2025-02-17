@@ -1,0 +1,40 @@
+#jinja2: trim_blocks: True, lstrip_blocks: True
+# {{ ansible_managed }}
+
+[Unit]
+Description             = paperless service with docker compose
+PartOf                  = docker.service
+After                   = docker.service
+
+[Service]
+Type                    = oneshot
+EnvironmentFile         = {{ paperless_defaults_directory }}/paperless
+
+RemainAfterExit         = true
+WorkingDirectory        = {{ paperless_install_path }}/active
+{% if paperless_service.command == 'docker-compose' %}
+ExecStart               = /usr/bin/docker-compose $OPTIONS_CONFIG
+ExecStart               = /usr/bin/docker-compose $OPTIONS_UP
+ExecStop                = /usr/bin/docker-compose $OPTIONS_DOWN
+{% else %}
+ExecStart               = /usr/bin/docker compose $OPTIONS_CONFIG
+ExecStart               = /usr/bin/docker compose $OPTIONS_UP
+ExecStop                = /usr/bin/docker compose $OPTIONS_DOWN
+{% endif %}
+TimeoutSec              = 900
+
+PrivateTmp              = yes
+UMask                   = 077
+NoNewPrivileges         = yes
+PrivateMounts           = yes
+ProtectControlGroups    = yes
+ProtectKernelTunables   = yes
+ProtectHome             = true
+ProtectSystem           = full
+RestrictAddressFamilies = AF_UNIX AF_INET AF_INET6
+RestrictNamespaces      = true
+RestrictRealtime        = true
+SystemCallArchitectures = native
+
+[Install]
+WantedBy                = multi-user.target

@@ -1,0 +1,86 @@
+---
+
+- name: get latest release
+  delegate_to: localhost
+  become: false
+  run_once: true
+  when:
+    - paperless_version == "latest"
+  block:
+    - name: get latest release
+      delegate_to: localhost
+      become: false
+      run_once: true
+      bodsch.scm.github_latest:
+        project: paperless-ngx
+        repository: paperless-ngx
+        user: "{{ lookup('env', 'GH_USER') | default(omit) }}"
+        password: "{{ lookup('env', 'GH_TOKEN') | default(omit) }}"
+      register: _latest_release
+
+    - name: re-define paperless_version
+      ansible.builtin.set_fact:
+        paperless_version: "{{ _latest_release.latest_release }}"
+
+- name: define download information
+  ansible.builtin.set_fact:
+    paperless_release: "{{ paperless_defaults_release | combine(paperless_release, recursive=True) }}"
+
+- name: define delegate instance for download handling
+  ansible.builtin.set_fact:
+    paperless_delegate_to: "{{ ansible_host }}"
+    paperless_local_tmp_directory: "{{
+        lookup('env', 'CUSTOM_LOCAL_TMP_DIRECTORY') |
+        default('/var/cache/ansible/paperless', true) }}/{{ paperless_version }}"
+  when:
+    - paperless_direct_download
+
+- name: create download directory
+  become: false
+  delegate_to: localhost
+  ansible.builtin.file:
+    path: "{{ paperless_local_tmp_directory }}"
+    state: directory
+    mode: "0750"
+
+- name: detect the downloaded paperless archive
+  become: false
+  delegate_to: "{{ paperless_delegate_to }}"
+  run_once: "{{ 'false' if paperless_direct_download else 'true' }}"
+  ansible.builtin.stat:
+    path: "{{ paperless_local_tmp_directory }}/{{ paperless_release.file }}"
+  register: stat_paperless_archive
+
+- name: download
+  when:
+    - stat_paperless_archive.stat is defined
+    - not stat_paperless_archive.stat.exists | default('false')
+    - not running_in_check_mode
+  block:
+    - name: download paperless {{ paperless_release.file }}
+      become: false
+      delegate_to: "{{ paperless_delegate_to }}"
+      run_once: "{{ 'false' if paperless_direct_download else 'true' }}"
+      ansible.builtin.get_url:
+        url: "{{ paperless_release.download_raw_url }}/refs/tags/v{{ paperless_version }}/{{ paperless_release.file }}"
+        dest: "{{ paperless_local_tmp_directory }}/{{ paperless_release.file }}"
+        mode: "0660"
+      register: _download_archive
+      until: _download_archive is succeeded
+      retries: 5
+      delay: 2
+
+  rescue:
+    - name: delete download directory
+      become: false
+      delegate_to: "{{ paperless_delegate_to }}"
+      run_once: "{{ 'false' if paperless_direct_download else 'true' }}"
+      ansible.builtin.file:
+        path: "{{ paperless_local_tmp_directory }}"
+        state: absent
+
+    - name: exit with fail
+      ansible.builtin.fail:
+        msg: A serious error occurred when downloading the archive.
+
+...

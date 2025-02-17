@@ -1,0 +1,52 @@
+---
+
+paperless_version: 2.14.7
+
+paperless_release: {}
+
+paperless_direct_download: false
+
+paperless_user:
+  owner: paperless
+  group: paperless
+  home: /home/paperless
+
+paperless_install_path: "/opt/paperless"
+
+paperless_service:
+  state: started
+  enabled: true
+  command: "docker compose"
+
+paperless_compose_networks: []
+  # - name: paperless
+  #   state: present
+  #   enable_ipv6: false
+  #   ipam:
+  #     driver: default
+  #     config:
+  #       - subnet: "172.10.10.0/24"
+
+paperless_compose_services: []
+  # - name: broker
+  #   image: docker.io/library/redis:7
+  #   restart: unless-stopped
+  #   volumes:
+  #     - redisdata:/data
+
+paperless_compose_volumes: []
+  # - name: redisdata
+
+paperless_config:
+  usermap:
+    uid: ""                             # 1000
+    gid: ""                             # 1000
+  url: ""                               # https://paperless.example.com
+  secret_key: ''                        # change-me
+  time_zone: ''                         # Europe/Berlin
+  ocr_languages: []
+    # - deu
+    # - eng
+  ocr_default_language: ''              # deu
+
+...

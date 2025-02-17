@@ -1,0 +1,41 @@
+---
+
+galaxy_info:
+  role_name: paperless
+  namespace: bodsch
+
+  author: Bodo Schulz
+  description: ansible role to install and configure dockerized paperless
+
+  license: Apache
+  min_ansible_version: "2.10"
+
+  platforms:
+    - name: ArchLinux
+    - name: Debian
+      versions:
+        # 10
+        - buster
+        # 11
+        - bullseye
+        # 12
+        - bookworm
+    - name: Ubuntu
+      versions:
+        # 20.04 LTS (Focal Fossa)
+        - focal
+        # 22.04 LTS (Jammy Jellyfish)
+        - jammy
+        # 22.10 (Kinetic Kudu)
+        # - kinetic
+        # 23.04 (Lunar Lobster)
+        # - lunar
+
+  galaxy_tags:
+    - paperless
+    - office
+    - ocr
+
+dependencies: []
+  # role: docker / collection bodsch.docker
+...

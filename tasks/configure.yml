@@ -1,0 +1,14 @@
+---
+
+- name: create docker-compose.env
+  ansible.builtin.template:
+    src: "docker-compose.env.j2"
+    dest: "{{ paperless_install_path }}/active/docker-compose.env"
+    force: true
+    owner: "{{ paperless_user.owner }}"
+    group: "{{ paperless_user.group }}"
+    mode: "0444"
+  notify:
+    - restart paperless
+
+...

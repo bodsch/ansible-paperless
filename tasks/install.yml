@@ -1,0 +1,143 @@
+---
+
+- name: user and group handling
+  when:
+    - paperless_user.owner != "root"
+  block:
+    - name: create paperless group
+      ansible.builtin.group:
+        name: "{{ paperless_user.group }}"
+        state: present
+        system: true
+
+    - name: create paperless user
+      ansible.builtin.user:
+        name: "{{ paperless_user.owner }}"
+        groups: "{{ paperless_user.group }}"
+        append: true
+        shell: /bin/bash
+        system: false
+        createhome: true
+        home: "{{ paperless_user.home }}"
+
+- name: create install directory
+  ansible.builtin.file:
+    path: "{{ paperless_install_path }}/{{ paperless_version }}"
+    state: directory
+    owner: "{{ paperless_user.owner }}"
+    group: "{{ paperless_user.group }}"
+    mode: "0755"
+
+- name: detect cloned paperless on '{{ paperless_delegate_to }}'
+  become: false
+  delegate_to: "{{ paperless_delegate_to }}"
+  run_once: "{{ 'false' if paperless_direct_download else 'true' }}"
+  ansible.builtin.stat:
+    path: "{{ paperless_local_tmp_directory }}/{{ paperless_release.file }}"
+  register: stat_file_binary
+
+- name: fail when extracted binary are missing
+  ansible.builtin.fail:
+    msg: "missing cloned file on {{ paperless_delegate_to }}"
+  when:
+    - not running_in_check_mode
+    - not stat_file_binary.stat.exists
+
+- name: detect installed paperless
+  ansible.builtin.stat:
+    path: "{{ paperless_install_path }}/{{ paperless_version }}/{{ paperless_release.file }}"
+  register: stat_paperless_installed
+
+- name: detect activated paperless
+  ansible.builtin.stat:
+    path: "{{ paperless_install_path }}/active/{{ paperless_release.file }}"
+  register: stat_paperless_activated
+
+- name: install and activate paperless
+  when:
+    - not running_in_check_mode
+    - stat_file_binary.stat.exists
+    - (stat_paperless_installed.stat is defined and not stat_paperless_installed.stat.exists | default('false')) or
+      not stat_paperless_activated.stat | bodsch.core.linked_version(paperless_install_path, paperless_version)
+  block:
+    - name: propagate files
+      block:
+        - name: propagate paperless binaries
+          ansible.builtin.copy:
+            src: "{{ paperless_local_tmp_directory }}/{{ paperless_release.file }}"
+            dest: "{{ paperless_install_path }}/{{ paperless_version }}/"
+            mode: "0755"
+            owner: "{{ paperless_user.owner }}"
+            group: "{{ paperless_user.group }}"
+            remote_src: "{{ 'true' if paperless_direct_download else 'false' }}"
+
+        - name: create link to binary
+          ansible.builtin.file:
+            src: "{{ paperless_install_path }}/{{ paperless_version }}"
+            dest: "{{ paperless_install_path }}/active"
+            state: link
+            force: true
+            owner: "{{ paperless_user.owner }}"
+            group: "{{ paperless_user.group }}"
+            follow: false
+          notify:
+            - restart paperless
+
+      rescue:
+        - name: delete install directory
+          ansible.builtin.file:
+            path: "{{ paperless_install_path }}"
+            state: absent
+
+        - name: exit with fail
+          ansible.builtin.fail:
+            msg: A serious error occurred during the installation of paperless.
+
+- name: "create compose files"
+  bodsch.docker.compose_files:
+    base_directory: "{{ paperless_install_path }}/active/docker-compose.d"
+    networks: "{{ paperless_compose_networks | default([]) }}"
+    services: "{{ paperless_compose_services | default([]) }}"
+    volumes: "{{ paperless_compose_volumes | default([]) }}"
+  notify:
+    - restart paperless
+  when:
+    - paperless_compose_networks | default([]) | length > 0 or
+      paperless_compose_services | default([]) | length > 0 or
+      paperless_compose_volumes | default([]) | length > 0
+
+- name: systemd
+  when:
+    - ansible_service_mgr | lower == "systemd"
+    - not running_in_check_mode
+  block:
+    - name: create paperless run configuration
+      ansible.builtin.template:
+        src: "paperless.j2"
+        dest: "{{ paperless_defaults_directory }}/paperless"
+        force: true
+        owner: root
+        group: "{{ paperless_user.group }}"
+        mode: "0640"
+      notify:
+        - restart paperless
+
+    - name: create systemd service unit
+      ansible.builtin.template:
+        src: "init/systemd/paperless.service.j2"
+        dest: "{{ systemd_lib_directory }}/paperless.service"
+        owner: root
+        group: root
+        mode: "0644"
+      notify:
+        - daemon-reload
+
+- name: create custom fact file
+  when:
+    - not running_in_check_mode
+  bodsch.core.facts:
+    name: paperless
+    facts:
+      version: "{{ paperless_version }}"
+
+...

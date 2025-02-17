@@ -1,0 +1,34 @@
+---
+
+paperless_tmp_directory: "/var/cache/ansible/paperless/{{ paperless_version }}"
+
+paperless_local_tmp_directory: "{{
+  lookup('env', 'CUSTOM_LOCAL_TMP_DIRECTORY') |
+  default(lookup('env', 'HOME') ~ '/.cache/ansible/paperless', true) }}" # "/{{ paperless_version }}"
+
+paperless_delegate_to: localhost
+
+# ---------------------------------------------------------------------------------------
+
+paperless_dependencies: []
+#  - python3-pip
+
+paperless_python_packages: []
+
+paperless_build_packages: []
+
+paperless_defaults_directory: /etc/default
+
+paperless_defaults_release:
+  download_url: https://github.com/paperless-ngx/paperless-ngx/releases
+  download_raw_url: https://raw.githubusercontent.com/paperless-ngx/paperless-ngx # v2.14.7/Dockerfile
+  #  paperless-ngx-v2.14.7.tar.xz
+  # file: "paperless-ngx-v{{ paperless_version }}.tar.xz"
+  file: Dockerfile
+  binary: paperless-ngx
+
+# ---------------------------------------------------------------------------------------
+
+systemd_lib_directory: /lib/systemd/system
+
+...

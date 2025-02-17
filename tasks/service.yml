@@ -1,0 +1,12 @@
+---
+
+- name: start and enable service
+  ansible.builtin.service:
+    name: paperless
+    state: "{{ paperless_service.state | default('started') }}"
+    enabled: "{{ paperless_service.enabled | default('true') | bool }}"
+  tags:
+    - paperless
+    - paperless-service
+
+...

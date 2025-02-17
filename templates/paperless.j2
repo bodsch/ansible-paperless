@@ -1,0 +1,31 @@
+#jinja2: trim_blocks: True, lstrip_blocks: True
+# {{ ansible_managed }}
+{% set _networks =  paperless_compose_networks | paperless_compose_active() %}
+{% set _services =  paperless_compose_services | paperless_compose_active() %}
+{% set _volumes =  paperless_compose_volumes | paperless_compose_active() %}
+{% set _files = _networks + _services + _volumes %}
+
+OPTIONS_CONFIG=" \
+  --env-file {{ paperless_install_path }}/active/docker-compose.env \
+  {% if _files | count > 0 %}
+    {% for f in _files %}
+  --file {{ paperless_install_path }}/active/docker-compose.d/{{ f }} \
+    {% endfor %}
+  {% else %}
+  --file {{ paperless_install_path }}/active/docker-compose.yml \
+  {% endif %}
+  config \
+  --output {{ paperless_install_path }}/active/paperless-compose.conf
+"
+
+OPTIONS_UP=" \
+  --file {{ paperless_install_path }}/active/paperless-compose.conf \
+  up \
+  --detach \
+  --remove-orphans
+"
+
+OPTIONS_DOWN=" \
+  --file {{ paperless_install_path }}/active/paperless-compose.conf \
+  down
+"

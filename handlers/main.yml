@@ -1,0 +1,26 @@
+---
+
+- name: daemon-reload
+  ansible.builtin.systemd:
+    daemon_reload: true
+    force: true
+  notify: restart paperless
+  when:
+    - ansible_service_mgr == 'systemd'
+
+- name: reload paperless
+  become: true
+  ansible.builtin.service:
+    name: paperless
+    state: reloaded
+  when:
+    - not running_in_check_mode
+
+- name: restart paperless
+  become: true
+  ansible.builtin.service:
+    name: paperless
+    state: restarted
+  when:
+    - not running_in_check_mode
+    - paperless_service.state | default('started') == "started"

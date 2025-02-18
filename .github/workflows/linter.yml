@@ -18,23 +18,25 @@ on:
           - debug
   push:
     branches:
+      - 'main'
       - 'feature/**'
-      - 'fix/**'
       - '!doc/**'
     paths:
-      - 'plugins/**'
-      - '!roles/**'
-      - '!.github/workflows/test_role*.yml'
+      - "!Makefile"
+      - "!README.md"
+      - 'library/*.py'
+      - 'filter_plugins/*.py'
       - '.config/pycodestyle.cfg'
   pull_request:
     branches:
+      - 'main'
       - 'feature/**'
-      - 'fix/**'
       - '!doc/**'
     paths:
-      - 'plugins/**'
-      - '!roles/**'
-      - '!.github/workflows/test_role*.yml'
+      - "!Makefile"
+      - "!README.md"
+      - 'library/*.py'
+      - 'filter_plugins/*.py'
       - '.config/pycodestyle.cfg'
 
 jobs:

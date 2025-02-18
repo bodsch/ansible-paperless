@@ -43,6 +43,7 @@ class FilterModule(object):
     def paperless_compose_active(self, data):
         """
         """
-        # display.v(f"paperless_compose_active({data})")
-        result = [f"{x.get("name")}.conf" for x in data if x.get("state", "present") == "present"]
+        display.v(f"paperless_compose_active({data})")
+        result = [f"{x.get("name")}.conf" for x in data if x.get("state", "present") == "present" and x.get("name", "").strip()]
+        display.v(f"  {result}")
         return result

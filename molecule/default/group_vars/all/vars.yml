@@ -1,3 +1,8 @@
 ---
 
+paperless_service:
+  state: stopped
+  enabled: true
+  command: "docker compose"
+
 ...

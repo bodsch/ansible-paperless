@@ -2,10 +2,10 @@
 # {{ ansible_managed }}
 
 [Unit]
-Description             = paperless service with docker compose
-PartOf                  = docker.service
+Description             = create docker compose config file for paperless
+PartOf                  = paperless.service
 After                   = docker.service
-After                   = paperless-config.service
+Before                  = paperless.service
 
 [Service]
 Type                    = oneshot
@@ -14,13 +14,10 @@ EnvironmentFile         = {{ paperless_defaults_directory }}/paperless
 RemainAfterExit         = true
 WorkingDirectory        = {{ paperless_install_path }}/active
 {% if paperless_service.command == 'docker-compose' %}
-ExecStart               = /usr/bin/docker-compose $OPTIONS_UP
-ExecStop                = /usr/bin/docker-compose $OPTIONS_DOWN
+ExecStart               = /usr/bin/docker-compose $OPTIONS_CONFIG
 {% else %}
-ExecStart               = /usr/bin/docker compose $OPTIONS_UP
-ExecStop                = /usr/bin/docker compose $OPTIONS_DOWN
+ExecStart               = /usr/bin/docker compose $OPTIONS_CONFIG
 {% endif %}
-TimeoutSec              = 900
 
 PrivateTmp              = yes
 UMask                   = 077

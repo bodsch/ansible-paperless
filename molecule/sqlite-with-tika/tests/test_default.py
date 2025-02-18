@@ -145,11 +145,15 @@ def test_service_running_and_enabled(host, get_vars):
     """
       running service
     """
-    service_name = "paperless"
-
     paperless_service = get_vars.get("paperless_service")
 
-    service = host.service(service_name)
+    service = host.service("paperless")
+    if paperless_service.get("state") == "started":
+        assert service.is_running
+    if paperless_service.get("enabled") == "true":
+        assert service.is_enabled
+
+    service = host.service("paperless-config")
     if paperless_service.get("state") == "started":
         assert service.is_running
     if paperless_service.get("enabled") == "true":

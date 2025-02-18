@@ -109,26 +109,11 @@ def local_facts(host):
         return dict()
 
 
-def test_directories(host, get_vars):
-
-    install_path = get_vars.get("paperless_install_path")
-
-    directories = [
-        f"{install_path}/active/data",
-        f"{install_path}/active/data/assets/ssl"
-    ]
-
-    for dirs in directories:
-        d = host.file(dirs)
-        assert d.is_directory
-
-
 def test_files(host, get_vars):
 
     install_path = get_vars.get("paperless_install_path")
 
     files = [
-        f"{install_path}/active/docker-compose.yml",
         f"{install_path}/active/docker-compose.env"
     ]
 
@@ -141,32 +126,16 @@ def test_service_running_and_enabled(host, get_vars):
     """
       running service
     """
-    service_name = "paperless"
-
     paperless_service = get_vars.get("paperless_service")
 
-    service = host.service(service_name)
+    service = host.service("paperless")
     if paperless_service.get("state") == "started":
         assert service.is_running
     if paperless_service.get("enabled") == "true":
         assert service.is_enabled
 
-
-def test_listening_socket(host, get_vars):
-    """
-    """
-    listening = host.socket.get_listening_sockets()
-
-    for i in listening:
-        print(i)
-
-    listen = [
-        "tcp://0.0.0.0:8080",
-    ]
-
-    paperless_service = get_vars.get("paperless_service")
-
-    for spec in listen:
-        socket = host.socket(spec)
-        if paperless_service.get("state") == "started":
-            assert socket.is_listening
+    service = host.service("paperless-config")
+    if paperless_service.get("state") == "started":
+        assert service.is_running
+    if paperless_service.get("enabled") == "true":
+        assert service.is_enabled

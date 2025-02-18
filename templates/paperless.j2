@@ -11,8 +11,6 @@ OPTIONS_CONFIG=" \
     {% for f in _files %}
   --file {{ paperless_install_path }}/active/docker-compose.d/{{ f }} \
     {% endfor %}
-  {% else %}
-  --file {{ paperless_install_path }}/active/docker-compose.yml \
   {% endif %}
   config \
   --output {{ paperless_install_path }}/active/paperless-compose.conf

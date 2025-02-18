@@ -16,6 +16,11 @@ OPTIONS_CONFIG=" \
   --output {{ paperless_install_path }}/active/paperless-compose.conf
 "
 
+OPTIONS_PULL=" \
+  --file {{ paperless_install_path }}/active/paperless-compose.conf \
+  pull
+"
+
 OPTIONS_UP=" \
   --file {{ paperless_install_path }}/active/paperless-compose.conf \
   up \

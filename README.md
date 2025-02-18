@@ -1,7 +1,7 @@
 
 # Ansible Role:  `paperless`
 
-Ansible role to install and configure paperless.
+Ansible role to install and configure [paperless-ngx](https://github.com/paperless-ngx/paperless-ngx).
 
 
 [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/bodsch/ansible-paperless/main.yml?branch=main)][ci]
@@ -19,12 +19,20 @@ Ansible role to install and configure paperless.
 Ansible Collections
 
 - [bodsch.core](https://github.com/bodsch/ansible-collection-core)
-- [bodsch.docker](https://github.com/bodsch/ansible-collection-docker)
+- [bodsch.docker](https://github.com/bodsch/ansible-collection-docker) (min. version: 1.2.0)
 - [bodsch.scm](https://github.com/bodsch/ansible-collection-scm)
 
-### Operating systems
+```bash
+ansible-galaxy collection install bodsch.core
+ansible-galaxy collection install bodsch.docker
+ansible-galaxy collection install bodsch.scm
+```
+or
+```bash
+ansible-galaxy collection install --requirements-file collections.yml
+```
 
-Tested on
+## tested operating systems
 
 * ArchLinux
 * Debian based

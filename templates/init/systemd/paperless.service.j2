@@ -4,9 +4,8 @@
 [Unit]
 Description             = paperless service with docker compose
 PartOf                  = docker.service
-After                   = docker.service
-Requires                = paperless-config.service
-Requires                = paperless-pull.service
+After                   = docker.service paperless-config.service paperless-pull.service
+Requires                = paperless-config.service paperless-pull.service
 
 [Service]
 Type                    = oneshot

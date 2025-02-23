@@ -4,7 +4,7 @@
 [Unit]
 Description             = create docker compose config file for paperless
 PartOf                  = paperless.service
-After                   = docker.service
+After                   = docker.service paperless-config.service
 Requires                = paperless-config.service
 Before                  = paperless.service
 

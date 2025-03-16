@@ -21,6 +21,26 @@
   ansible.builtin.service:
     name: paperless
     state: restarted
+  register: paperless_restart_service
   when:
     - not running_in_check_mode
     - paperless_service.state | default('started') == "started"
+
+- name: daemon start has failed
+  when:
+    - paperless_restart_service.failed
+  tags:
+    - paperless
+    - paperless-service
+  block:
+    - name: journalctl entries from this module
+      bodsch.systemd.journalctl:
+        identifier: paperless
+        lines: 20
+      register: paperless_journalctl
+      when:
+        - ansible_service_mgr == 'systemd'
+
+    - name: journalctl output
+      ansible.builtin.debug:
+        msg: "{{ paperless_journalctl.stdout }}"

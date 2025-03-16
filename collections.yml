@@ -2,6 +2,7 @@
 
 collections:
   - name: bodsch.core
+  - name: bodsch.systemd
   - name: bodsch.docker
     version: ">=1.2.0"
   - name: community.general

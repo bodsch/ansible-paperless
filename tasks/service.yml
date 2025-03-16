@@ -1,12 +1,36 @@
 ---
 
+- name: flush handlers
+  ansible.builtin.meta: flush_handlers
+
 - name: start and enable service
   ansible.builtin.service:
     name: paperless
     state: "{{ paperless_service.state | default('started') }}"
     enabled: "{{ paperless_service.enabled | default('true') | bool }}"
+  register: paperless_running_service
   tags:
     - paperless
     - paperless-service
+
+- name: daemon start has failed
+  when:
+    - paperless_running_service.failed
+  tags:
+    - paperless
+    - paperless-service
+  block:
+    - name: journalctl entries from this module
+      bodsch.systemd.journalctl:
+        identifier: paperless
+        lines: 20
+      register: paperless_journalctl
+      when:
+        - ansible_service_mgr == 'systemd'
+
+    - name: journalctl output
+      ansible.builtin.debug:
+        msg: "{{ paperless_journalctl.stdout }}"
+      # when: "'failed to start daemon' in paperless_journalctl.stdout"
 
 ...
